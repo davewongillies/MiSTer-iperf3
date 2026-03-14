@@ -1,0 +1,71 @@
+---
+name: Build iperf3 for MiSTer
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  build_iperf3:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install apt-get utilities
+      run: >
+        sudo apt update &&
+        sudo apt-get install -y -qq
+        binfmt-support
+        qemu-user-static
+        autoconf
+        build-essential
+        curl
+        gcc
+        git
+        make
+        qemu-user
+        sharutils
+        u-boot-tools
+
+        # openssl
+        # bc
+        # bison
+        # libelf-dev
+        # libgmp3-dev
+        # libiberty-dev
+        # liblz4-tool
+        # libmpc-dev
+        # libncurses-dev
+        # libncurses5-dev
+        # libpci-dev
+        # libssl-dev
+        # libssl-dev
+        # libudev-dev
+        # lzop
+        # flex
+
+    - name: Build iperf3
+      env:
+        IPERF3_VERSION: "3.20"
+        GCC_VERSION: 10.2-2020.11
+      run: >
+        .github/build-iperf3.sh
+
+    - name: Commit and push changes
+      uses: devops-infra/action-commit-push@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        commit_message: Updated Scripts directory
+
+    - name: Build Custom Database for MiSTer Downloader
+      run: >
+        sudo chown -R runner .git ;
+        set -o pipefail
+        && curl --fail --location https://raw.githubusercontent.com/theypsilon/Downloader_DB-Template_MiSTer/main/.github/build_db.py
+        | python3 -
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
