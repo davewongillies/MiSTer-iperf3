@@ -32,11 +32,18 @@ get() {
 build() {
   # Go into the cdrdao-repo directory and configure the build to run for ARM Linux
   cd iperf-${IPERF3_VERSION}
-  ./configure --host=arm-none-linux-gnueabihf
+  ./configure --host=arm-none-linux-gnueabihf --enable-static-bin
   make
-  cp -v src/iperf3 $STARTDIR/Scripts/.config/mister-iperf3
+  find . -type f -name iperf3
+  cp "$(find . -type f -name iperf3)"  "${STARTDIR}/Scripts/.config/mister-iperf3"
+}
+
+cleanup() {
+  cd $STARTDIR
+  rm -rf iperf-${IPERF3_VERSION} iperf-${IPERF3_VERSION}.tar.gz
 }
 
 setup_env
 get
 build
+cleanup
