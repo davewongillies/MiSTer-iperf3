@@ -1,10 +1,10 @@
 # MiSTer-iperf3
 
-A script for running iperf3 on your MiSTer.
+A script for running [iperf3](https://iperf.fr/) on your MiSTer.
 
 ## Prerequisites
 
-* An Internet connected MiSTer
+* A network connected MiSTer (Ethernet or wifi)
 * Optionaly a keyboard connected to your MiSTer for inputting the address of
   your iperf3 server
 * iperf3 running in server mode on a computer on your network
@@ -32,8 +32,10 @@ IPERF3_SERVER=<address of your iperf3 server here>
 
 ## Running iperf3
 
-1. On another computer run `iperf3 -s -1`
+1. Run iperf3 in server mode on another computer, eg: `iperf3 --server --one-off`
 2. On your MiSTer run `iperf3` from the `Scripts` menu
+
+iperf3 output is logged to `/var/log/iperf3.log` on your MiSTer.
 
 ## Example output
 
