@@ -13,7 +13,7 @@ jobs:
   build_iperf3:
     runs-on: ubuntu-latest
     env:
-      IPERF3_VERSION: "3.20"
+      IPERF3_VERSION: "3.21"
 
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +29,7 @@ jobs:
         if: steps.cache-check.outputs.cache-hit != 'true'
         run: >
           sudo apt update &&
-          sudo apt-get install -y -qq
-            binfmt-support
-            qemu-user-static
-            autoconf
-            build-essential
-            curl
-            gcc
-            git
-            make
-            qemu-user
-            sharutils
-            u-boot-tools
+          sudo apt-get install -y -qq binfmt-support qemu-user-static autoconf build-essential curl gcc git make qemu-user sharutils u-boot-tools
 
       - name: Build iperf3
         if: steps.cache-check.outputs.cache-hit != 'true'
