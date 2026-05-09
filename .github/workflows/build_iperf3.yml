@@ -12,43 +12,56 @@ permissions: write-all
 jobs:
   build_iperf3:
     runs-on: ubuntu-latest
+    env:
+      IPERF3_VERSION: "3.20"
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Install apt-get utilities
-      run: >
-        sudo apt update &&
-        sudo apt-get install -y -qq
-        binfmt-support
-        qemu-user-static
-        autoconf
-        build-essential
-        curl
-        gcc
-        git
-        make
-        qemu-user
-        sharutils
-        u-boot-tools
+      - uses: actions/checkout@v4
 
-    - name: Build iperf3
-      env:
-        IPERF3_VERSION: "3.20"
-        GCC_VERSION: 10.2-2020.11
-      run: >
-        .github/build_iperf3.sh
+      - name: Check version cache
+        id: cache-check
+        uses: actions/cache@v4
+        with:
+          path: /tmp/build-status.txt
+          key: fastfetch-${{ env.IPERF3_VERSION }}
 
-    - name: Commit and push changes
-      uses: devops-infra/action-commit-push@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        commit_message: Updated Scripts directory
+      - name: Install apt-get utilities
+        if: steps.cache-check.outputs.cache-hit != 'true'
+        run: >
+          sudo apt update &&
+          sudo apt-get install -y -qq
+            binfmt-support
+            qemu-user-static
+            autoconf
+            build-essential
+            curl
+            gcc
+            git
+            make
+            qemu-user
+            sharutils
+            u-boot-tools
 
-    - name: Build Custom Database for MiSTer Downloader
-      run: >
-        sudo chown -R runner .git ;
-        set -o pipefail
-        && curl --fail --location https://raw.githubusercontent.com/theypsilon/Downloader_DB-Template_MiSTer/main/.github/build_db.py
-        | python3 -
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build iperf3
+        if: steps.cache-check.outputs.cache-hit != 'true'
+        env:
+          GCC_VERSION: 10.2-2020.11
+        run: |
+          .github/build_iperf3.sh
+          echo "${{ env.IPERF3_VERSION }}" > /tmp/build-status.txt
+
+      - name: Commit and push changes
+        if: steps.cache-check.outputs.cache-hit != 'true'
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: Updated Scripts directory
+
+      - name: Build Custom Database for MiSTer Downloader
+        run: >
+          sudo chown -R runner .git ;
+          set -o pipefail
+          && curl --fail --location https://raw.githubusercontent.com/theypsilon/Downloader_DB-Template_MiSTer/main/.github/build_db.py
+          | python3 -
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
