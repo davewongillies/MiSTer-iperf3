@@ -30,12 +30,13 @@ get() {
 }
 
 build() {
+  arm-linux-gnueabihf-gcc -dumpmachine
   # Go into the cdrdao-repo directory and configure the build to run for ARM Linux
   cd iperf-${IPERF3_VERSION}
-  ./configure --host=arm-none-linux-gnueabihf --enable-static-bin
+  ./configure --host=arm-linux-gnueabihf --enable-static-bin
   make
   ./src/iperf3 --version
-  file "$(./src/iperf3 --version)"
+  file /src/iperf3
   cp "$(find . -type f -name iperf3)"  "${STARTDIR}/Scripts/.config/mister-iperf3"
 }
 
