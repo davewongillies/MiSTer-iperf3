@@ -43,7 +43,8 @@ cleanup() {
   rm -rf iperf-${IPERF3_VERSION} iperf-${IPERF3_VERSION}.tar.gz
 }
 
-setup_env
+# setup_env
+cd /tmp
 get
 build
-cleanup
+# cleanup
