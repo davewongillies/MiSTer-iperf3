@@ -35,6 +35,7 @@ build() {
   ./configure --host=arm-none-linux-gnueabihf --enable-static-bin
   make
   ./src/iperf3 --version
+  file "$(./src/iperf3 --version)"
   cp "$(find . -type f -name iperf3)"  "${STARTDIR}/Scripts/.config/mister-iperf3"
 }
 

@@ -31,9 +31,15 @@ jobs:
       - name: Install apt-get utilities
         if: steps.cache-check.outputs.cache-hit != 'true' ||
           github.event_name == 'pull_request'
+
         run: >
           sudo apt update &&
-          sudo apt-get install -y -qq binfmt-support qemu-user-static autoconf build-essential curl gcc git make qemu-user sharutils u-boot-tools
+          sudo apt-get install -y -qq autoconf binfmt-support build-essential gcc make qemu-user-static gcc-arm-linux-gnueabihf
+            # sharutils
+            # u-boot-tools
+            # curl
+            # git
+            # qemu-user
 
       - name: Build iperf3
         if: steps.cache-check.outputs.cache-hit != 'true'  ||
