@@ -29,28 +29,41 @@ jobs:
           key: fastfetch-${{ env.IPERF3_VERSION }}
 
       - name: Install apt-get utilities
-        if: steps.cache-check.outputs.cache-hit != 'true' ||
+        if: |
+          steps.cache-check.outputs.cache-hit != 'true' ||
           github.event_name == 'pull_request'
 
-        run: >
-          sudo apt update &&
-          sudo apt-get install -y -qq autoconf binfmt-support build-essential gcc make qemu-user-static gcc-arm-linux-gnueabihf
-            # sharutils
-            # u-boot-tools
-            # curl
-            # git
-            # qemu-user
+        run: |
+          sudo apt update
+          sudo apt-get install -y -qq \
+            autoconf \
+            binfmt-support \
+            build-essential \
+            gcc \
+            gcc-arm-linux-gnueabihf \
+            make \
+            qemu-user-static
 
       - name: Build iperf3
-        if: steps.cache-check.outputs.cache-hit != 'true'  ||
+        if: |
+          steps.cache-check.outputs.cache-hit != 'true'  ||
           github.event_name == 'pull_request'
-        env:
-          GCC_VERSION: 10.2-2020.11
         run: |
-          .github/build_iperf3.sh
+          set -euo pipefail
+          STARTDIR="$PWD"
+          cd /tmp
+          wget -q "https://github.com/esnet/iperf/releases/download/${IPERF3_VERSION}/iperf-${IPERF3_VERSION}.tar.gz"
+          tar xf "iperf-${IPERF3_VERSION}.tar.gz"
+          cd "iperf-${IPERF3_VERSION}"
+          ./configure --host=arm-linux-gnueabihf --enable-static-bin
+          make
+          ./src/iperf3 --version
+          file ./src/iperf3 |grep -E "ARM, .*, statically linked"
+          cp "$(find . -type f -name iperf3)"  "${STARTDIR}/Scripts/.config/mister-iperf3"
 
       - name: Update cache version
-        if: steps.cache-check.outputs.cache-hit != 'true' &&
+        if: |
+          steps.cache-check.outputs.cache-hit != 'true' &&
           github.ref == 'refs/heads/main'
         run: >
           echo "${{ env.IPERF3_VERSION }}" > /tmp/build-status.txt
