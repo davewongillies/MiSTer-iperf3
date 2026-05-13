@@ -1,0 +1,87 @@
+---
+name: Build iperf3 for MiSTer
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    env:
+      IPERF3_VERSION: "3.21"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version cache
+        id: cache-check
+        uses: actions/cache@v4
+        with:
+          path: /tmp/build-status.txt
+          key: fastfetch-${{ env.IPERF3_VERSION }}
+
+      - name: Install apt-get utilities
+        if: |
+          steps.cache-check.outputs.cache-hit != 'true' ||
+          github.event_name == 'pull_request'
+
+        run: |
+          sudo apt update
+          sudo apt-get install -y -qq \
+            autoconf \
+            binfmt-support \
+            build-essential \
+            gcc \
+            gcc-arm-linux-gnueabihf \
+            make \
+            qemu-user-static
+
+      - name: Build iperf3
+        if: |
+          steps.cache-check.outputs.cache-hit != 'true'  ||
+          github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          STARTDIR="$PWD"
+          cd /tmp
+          wget -q "https://github.com/esnet/iperf/releases/download/${IPERF3_VERSION}/iperf-${IPERF3_VERSION}.tar.gz"
+          tar xf "iperf-${IPERF3_VERSION}.tar.gz"
+          cd "iperf-${IPERF3_VERSION}"
+          ./configure --host=arm-linux-gnueabihf --enable-static-bin
+          make
+          ./src/iperf3 --version
+          file ./src/iperf3 |grep -E "ARM, .*, statically linked"
+          cp "$(find . -type f -name iperf3)"  "${STARTDIR}/Scripts/.config/mister-iperf3"
+
+      - name: Update cache version
+        if: |
+          steps.cache-check.outputs.cache-hit != 'true' &&
+          github.ref == 'refs/heads/main'
+        run: >
+          echo "${{ env.IPERF3_VERSION }}" > /tmp/build-status.txt
+
+
+      - name: Commit and push changes
+        if: steps.cache-check.outputs.cache-hit != 'true'
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: Updated Scripts directory
+
+      - name: Build Custom Database for MiSTer Downloader
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sudo chown -R runner .git
+          set -o pipefail
+          curl --fail --location https://raw.githubusercontent.com/theypsilon/Downloader_DB-Template_MiSTer/main/.github/build_db.py
+          | python3 -
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
